@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ExpenseTracker": {
+      "command": "C://Program Files//nodejs//npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://localhost:8000/mcp",
+        "--header",
+        "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqYXN3YW50aCIsImV4cCI6MTgwNDk0MTc1NH0.wficORcxiz2ooCfK4IGzLY57pZ91XyyJ4Wn0xDe6jGE",
+        "--allow-http"
+      ]
+    }
+  }
+}
