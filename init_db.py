@@ -65,6 +65,37 @@ async def _create_database_if_needed() -> None:
         await conn.close()
 
 
+async def _migrate_old_schema() -> None:
+    """
+    If the database has old tables without user_id (from a pre-multi-user version),
+    drop and recreate them so the new schema can be applied cleanly.
+    Tables checked: expenses, income, budgets.
+    The users and categories tables are kept as-is.
+    """
+    async with await _connect() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'expenses'
+                  AND column_name = 'user_id'
+            """)
+            has_user_id = await cur.fetchone()
+
+        if not has_user_id:
+            log.warning(
+                "Old schema detected (expenses.user_id missing) — "
+                "dropping data tables and recreating with new schema."
+            )
+            async with conn.cursor() as cur:
+                await cur.execute("""
+                    DROP TABLE IF EXISTS budgets  CASCADE;
+                    DROP TABLE IF EXISTS income   CASCADE;
+                    DROP TABLE IF EXISTS expenses CASCADE;
+                """)
+            log.info("Old tables dropped — will recreate with new schema.")
+
+
 async def _create_tables() -> None:
     if not os.path.exists(SCHEMA_PATH):
         raise FileNotFoundError(f"schema.sql not found at {SCHEMA_PATH}")
@@ -106,6 +137,7 @@ async def init_db() -> None:
     """Full async DB setup — idempotent."""
     log.info("══════ DB INIT START ══════")
     await _create_database_if_needed()
+    await _migrate_old_schema()
     await _create_tables()
     await _seed_categories()
     log.info("══════ DB INIT COMPLETE ══════")
