@@ -1,181 +1,403 @@
-# Expense Tracker MCP v3 — Multi-User
+# 💰 Expense Tracker MCP Server
 
-Fully async FastMCP expense tracker. Each user has their own isolated data.
-29 tools, PostgreSQL (Neon or local), JWT authentication, bcrypt passwords.
+A **multi-user AI-powered expense tracking server** built using **FastMCP, FastAPI, and PostgreSQL**.
 
----
+This server integrates with **Claude Desktop via the Model Context Protocol (MCP)**, allowing users to **manage personal finances using natural language**.
 
-## What Changed From v2 (Single-User)
+Example:
 
-| | v2 (single-user) | **v3 (multi-user)** |
-|---|---|---|
-| Users | 1 hardcoded in `.env` | Many — stored in `users` DB table |
-| Passwords | Plain text in `.env` | bcrypt hashed in database |
-| Data isolation | Everyone sees same data | Each user sees only their own |
-| Registration | N/A | `POST /auth/register` |
-| New file | — | `context.py` — ContextVar carries user through every async call |
-| Middleware | BaseHTTPMiddleware | Pure ASGI (context vars propagate correctly) |
-| Schema | No users table | `users` table + `user_id` on expenses/income/budgets |
+> “Add ₹250 lunch expense under Food for today”
+
+The AI automatically calls the appropriate MCP tool.
 
 ---
 
-## Project Structure
+# ✨ Features
+
+### 🔐 Secure Authentication
+
+* JWT-based authentication
+* Each user receives a **personal token**
+* Fully isolated user data
+
+### 👥 Multi-User Architecture
+
+* One server supports **many users**
+* Each user's data remains private
+
+### 🧰 29 MCP Tools
+
+Full financial toolkit including:
+
+* Expenses
+* Income
+* Budgets
+* Categories
+* Summaries
+* CSV export
+
+### ☁️ Cloud Ready
+
+Deploy easily using:
+
+* **Railway**
+* **Neon PostgreSQL**
+
+### 📋 Self-Service Registration
+
+Users can create accounts via:
 
 ```
-expense_tracker/
-├── api/
-│   ├── __init__.py
-│   ├── server.py         ← FastAPI app, /auth/register, /auth/token
-│   ├── auth.py           ← bcrypt hashing, DB-based auth, JWT
-│   └── middleware.py     ← Pure ASGI JWT middleware (context vars safe)
-├── tools/
-│   ├── expense_tools.py  (5 tools)
-│   ├── income_tools.py   (4 tools)
-│   ├── budget_tools.py   (4 tools)
-│   ├── category_tools.py (4 tools)
-│   ├── summary_tools.py  (9 tools)
-│   └── utility_tools.py  (3 tools)
-├── resources/
-│   └── category_resource.py
-├── context.py            ← ContextVar: current_user
-├── main.py               ← FastMCP instance, registers all 29 tools
-├── db.py                 ← async execute_query()
-├── init_db.py            ← async DB bootstrap (idempotent)
-├── config.py             ← all config from env vars
-├── utils.py              ← validate_date()
-├── logger.py             ← structured logging
-├── schema.sql            ← multi-user DB schema
-├── categories.json       ← 22 default categories
-├── create_user.py        ← CLI to create users when registration is off
-├── Procfile              ← for Railway/Render deployment
+/register
+```
+
+---
+
+# 🏗️ System Architecture
+
+```
+Claude Desktop
+(MCP Client)
+        │
+        │  Bearer Token (JWT)
+        ▼
+FastAPI Application
+        │
+        │ JWT Middleware
+        ▼
+FastMCP Server
+(29 Financial Tools)
+        │
+        ▼
+Neon PostgreSQL
+(users, expenses, income, budgets)
+```
+
+---
+
+# 📁 Project Structure
+
+```
+expense_tracker_v3/
+│
+├── main.py
+├── run.py
+├── app.py
+├── config.py
+├── context.py
+├── db.py
+├── init_db.py
+├── logger.py
+├── utils.py
+├── create_user.py
+├── schema.sql
+├── categories.json
 ├── requirements.txt
 ├── pyproject.toml
-├── .env.example
-└── .gitignore
+├── Procfile
+│
+├── api/
+│   ├── auth.py
+│   ├── middleware.py
+│   └── server.py
+│
+├── tools/
+│   ├── expense_tools.py
+│   ├── income_tools.py
+│   ├── budget_tools.py
+│   ├── category_tools.py
+│   ├── summary_tools.py
+│   └── utility_tools.py
+│
+└── static/
+    └── register.html
 ```
 
 ---
 
-## Local Setup
+# 🛠️ MCP Tools
 
-### 1. Install
+### Expense Tools
 
-```powershell
+* add_expense
+* update_expense
+* delete_expense
+* list_expenses
+* get_expense_by_id
+
+### Income Tools
+
+* add_income
+* list_income
+* delete_income
+* monthly_income
+
+### Budget Tools
+
+* set_budget
+* get_budget
+* check_budget_status
+* delete_budget
+
+### Category Tools
+
+* get_categories
+* add_category
+* update_category
+* delete_category
+
+### Summary Tools
+
+* summarize_expenses
+* daily_summary
+* weekly_summary
+* monthly_summary
+* yearly_summary
+* category_breakdown
+* top_spending
+* compare_months
+* get_balance
+
+### Utility Tools
+
+* get_last_expenses
+* search_expenses
+* export_expenses_csv
+
+Total: **29 MCP tools**
+
+---
+
+# 🗄️ Database Schema
+
+### Users
+
+```
+users
+- id
+- username (UNIQUE)
+- password (bcrypt)
+- created_at
+```
+
+### Categories
+
+```
+categories
+- id
+- name (UNIQUE)
+```
+
+Shared across all users.
+
+### Expenses
+
+```
+expenses
+- id
+- user_id
+- date
+- amount
+- category_id
+- subcategory
+- note
+```
+
+### Income
+
+```
+income
+- id
+- user_id
+- date
+- amount
+- source
+- note
+```
+
+### Budgets
+
+```
+budgets
+- id
+- user_id
+- category_id
+- monthly_limit
+```
+
+Unique constraint:
+
+```
+(user_id, category_id)
+```
+
+---
+
+# 🚀 Local Setup (Windows)
+
+## 1. Clone Repository
+
+```
+git clone https://github.com/parnajaswanth227/Expense_Tracker_With_Claude.git
+cd Expense_Tracker_With_Claude
+```
+
+---
+
+## 2. Initialize Environment
+
+```
 uv init
-uv venv
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+uv venv --python 3.12
 .venv\Scripts\activate
-uv add fastmcp fastapi uvicorn psycopg[binary] python-dotenv python-jose[cryptography] passlib[bcrypt]
 ```
-
-### 2. Configure
-
-```powershell
-copy .env.example .env
-# Edit .env:
-#   DATABASE_URL  (Neon)  OR  DB_PASSWORD (local postgres)
-#   SECRET_KEY    →  python -c "import secrets; print(secrets.token_hex(32))"
-#   ALLOW_REGISTRATION=true
-```
-
-### 3. Start server
-
-```powershell
-uvicorn api.server:app --port 8000
-```
-
-DB tables and categories are created automatically on first startup.
 
 ---
 
-## User Management
+## 3. Fix Windows Link Mode
 
-### Register a new user
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/auth/register" `
-  -Method POST -ContentType "application/json" `
-  -Body '{"username":"jaswanth","password":"MyStrongPass123"}'
+```
+$env:UV_LINK_MODE="copy"
 ```
 
-### Get a JWT token
+---
 
-```powershell
-$r = Invoke-RestMethod -Uri "http://localhost:8000/auth/token" `
-  -Method POST -ContentType "application/json" `
-  -Body '{"username":"jaswanth","password":"MyStrongPass123"}'
+## 4. Install Dependencies
+
+```
+uv add fastmcp fastapi uvicorn psycopg[binary] python-dotenv python-jose[cryptography] bcrypt
+uv pip install -r requirements.txt
+```
+
+---
+
+## 5. Create Environment File
+
+Create `.env`
+
+```
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+SECRET_KEY=your_secret_key
+ALLOW_REGISTRATION=true
+ACCESS_TOKEN_EXPIRE_MINUTES=525600
+```
+
+Generate secret key:
+
+```
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+---
+
+## 6. Start Server
+
+```
+uv run python run.py
+```
+
+Server runs at:
+
+```
+http://localhost:8000
+```
+
+---
+
+# 🔑 Authentication Flow
+
+```
+User
+ │
+ │ POST /auth/register
+ ▼
+Server creates user
+ │
+ │ returns JWT token
+ ▼
+User calls MCP tools
+ │
+ │ Authorization: Bearer TOKEN
+ ▼
+JWT middleware verifies user
+ │
+ ▼
+Tool executes with user_id
+```
+
+---
+
+# 🧪 Testing with PowerShell
+
+### Health Check
+
+```
+Invoke-RestMethod http://localhost:8000/health
+```
+
+---
+
+### Register User
+
+```
+Invoke-RestMethod `
+  -Uri "http://localhost:8000/auth/register" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"username":"jaswanth","password":"MyPassword123"}'
+```
+
+---
+
+### Login
+
+```
+$r = Invoke-RestMethod `
+  -Uri "http://localhost:8000/auth/token" `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"username":"jaswanth","password":"MyPassword123"}'
 
 $token = $r.access_token
-echo $token
-```
-
-### Lock down registration (after setup)
-
-In `.env`:
-```
-ALLOW_REGISTRATION=false
-```
-
-Restart the server. Now `/auth/register` returns 403. To add more users use:
-
-```powershell
-python create_user.py --username alice --password StrongPass456
 ```
 
 ---
 
-## Test MCP Tools
+### Initialize MCP Session
 
-```powershell
-# Initialize session
+```
 $init = Invoke-WebRequest `
-  -Uri "http://localhost:8000/mcp" -Method POST `
+  -Uri "http://localhost:8000/mcp" `
+  -Method POST `
   -Headers @{
-    Authorization  = "Bearer $token"
-    "Content-Type" = "application/json"
-    "Accept"       = "application/json, text/event-stream"
+    Authorization="Bearer $token"
+    "Content-Type"="application/json"
+    "Accept"="application/json, text/event-stream"
   } `
   -Body '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
-
-$sessionId = $init.Headers["mcp-session-id"]
-
-# List all tools
-Invoke-RestMethod `
-  -Uri "http://localhost:8000/mcp" -Method POST `
-  -Headers @{
-    Authorization      = "Bearer $token"
-    "Content-Type"     = "application/json"
-    "Accept"           = "application/json, text/event-stream"
-    "mcp-session-id"   = $sessionId
-  } `
-  -Body '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
 ---
 
-## Deploy to Railway / Render
+# 🖥️ Claude Desktop Integration
 
-1. Push code to GitHub (`.env` is gitignored — never pushed)
-2. Connect your GitHub repo to Railway or Render
-3. Set environment variables in the hosting dashboard:
-   ```
-   DATABASE_URL      = your Neon connection string
-   SECRET_KEY        = your generated key
-   ALLOW_REGISTRATION = true  (set false after setup)
-   ```
-4. The `Procfile` handles the start command automatically:
-   ```
-   web: uvicorn api.server:app --host 0.0.0.0 --port $PORT
-   ```
-5. Your server URL will be: `https://yourapp.railway.app`
+## Option 1 — Local (stdio)
+
+```
+uv run fastmcp install claude-desktop main.py
+```
 
 ---
 
-## Claude Desktop Config
+## Option 2 — Cloud HTTP
 
-Replace `YOUR_SERVER_URL` and `YOUR_JWT_TOKEN`:
+Edit:
 
-```json
+```
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+```
 {
   "mcpServers": {
     "ExpenseTracker": {
@@ -183,76 +405,89 @@ Replace `YOUR_SERVER_URL` and `YOUR_JWT_TOKEN`:
       "args": [
         "-y",
         "mcp-remote@latest",
-        "https://YOUR_SERVER_URL/mcp",
+        "https://your-app.railway.app/mcp",
         "--header",
-        "Authorization: Bearer YOUR_JWT_TOKEN"
+        "Authorization: Bearer YOUR_TOKEN"
       ]
     }
   }
 }
 ```
 
-Each user puts their own JWT token in their own Claude Desktop config.
-User A's token → User A's data. User B's token → User B's data. Completely isolated.
+---
+
+# ☁️ Cloud Deployment
+
+## Neon Database
+
+1. Create project at
+   https://neon.tech
+
+2. Copy connection string.
 
 ---
 
-## How Data Isolation Works
+## Railway Deployment
 
-Every tool reads the authenticated username from a `ContextVar`:
+1. Create project on Railway
+2. Deploy from GitHub repository
+
+Railway reads:
 
 ```
-Request arrives
-     │
-     ▼
-JWTMiddleware validates token → sets current_user ContextVar = "jaswanth"
-     │
-     ▼
-FastMCP calls add_expense(date, amount, category_id, ...)
-     │
-     ▼
-Tool reads:  uid = current_user.get()  →  "jaswanth"
-     │
-     ▼
-SQL:  INSERT INTO expenses (user_id, ...) VALUES ('jaswanth', ...)
+Procfile
 ```
 
-User never passes their username — it comes invisibly from the JWT token.
-Even if User B somehow knew User A's expense ID, they can't access it
-because every query includes `AND user_id = 'userB'`.
+```
+web: uvicorn api.server:app --host 0.0.0.0 --port $PORT
+```
 
 ---
 
-## Tools Reference (29 total)
+## Environment Variables
 
-| Group | Tool | Description |
-|---|---|---|
-| **Expense** | `add_expense` | Add new expense |
-| | `update_expense` | Partial update |
-| | `delete_expense` | Delete by ID |
-| | `list_expenses` | Paginated list by date range |
-| | `get_expense_by_id` | Fetch single expense |
-| **Income** | `add_income` | Add income record |
-| | `list_income` | List by date range |
-| | `delete_income` | Delete by ID |
-| | `monthly_income` | Total for a month |
-| **Budget** | `set_budget` | Create/update monthly limit |
-| | `get_budget` | List your budgets |
-| | `check_budget_status` | Compare spend vs limits |
-| | `delete_budget` | Remove a budget |
-| **Category** | `get_categories` | List all categories (shared) |
-| | `add_category` | Create category |
-| | `update_category` | Rename category |
-| | `delete_category` | Delete (blocked if in use) |
-| **Summary** | `summarize_expenses` | By category for date range |
-| | `daily_summary` | Single day total |
-| | `weekly_summary` | ISO week total |
-| | `monthly_summary` | Calendar month total |
-| | `yearly_summary` | Full year breakdown |
-| | `category_breakdown` | Category + subcategory detail |
-| | `top_spending` | Top N categories |
-| | `compare_months` | Side-by-side comparison |
-| | `get_balance` | All-time income vs expense |
-| **Utility** | `get_last_expenses` | Most recent N expenses |
-| | `search_expenses` | Keyword search |
-| | `export_expenses_csv` | Export to CSV |
+```
+DATABASE_URL
+SECRET_KEY
+ALLOW_REGISTRATION
+ACCESS_TOKEN_EXPIRE_MINUTES
+```
+
+---
+
+# 👤 Multi-User Workflow
+
+```
+User opens /register
+        │
+        ▼
+Account created
+        │
+        ▼
+JWT token generated
+        │
+        ▼
+User adds token to Claude Desktop
+        │
+        ▼
+All MCP tools operate
+with isolated user data
+```
+
+---
+
+# 📌 Example Natural Language Commands
+
+Inside Claude Desktop:
+
+```
+Add ₹300 dinner expense under Food
+Show my expenses for this week
+Compare spending between February and March
+What is my current balance?
+Export my expenses to CSV
+```
+
+Claude automatically calls the correct MCP tool.
+
+
