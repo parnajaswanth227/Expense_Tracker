@@ -557,8 +557,9 @@ screenshorts\Screenshot 2026-03-14 113116.png
 
 The AI assistant analyzes your expenses and presents a clear financial overview including income, spending distribution, and balance.
 
-![claude_desktop](screenshots/claude_desktop.png)
-
+<p align="center">
+  <img src="screenshots/claude_desktop.png" width="800">
+</p>
 Features shown:
 
 * Total income, expenses, and balance
@@ -575,7 +576,9 @@ Example insight:
 ## 📱 Claude AI Mobile – Natural Language Expense Entry
 C:\Users\parna\Videos\expense_tracker_v3\screenshorts\WhatsApp Image 2026-03-14 at 11.33.34 AM.jpeg
 Users can add expenses using **natural language with AI**.
-![Claude ai web](screenshots/webapp.jpeg)
+<p align="center">
+  <img src="screenshots/webapp.jpeg" width="800">
+</p>
 Example command:
 
 ```
@@ -600,3 +603,54 @@ Returned response includes:
 * Date
 
 This demonstrates how users can **manage finances conversationally with AI**.
+
+
+# 🌐 Live Demo
+
+The project is deployed on **Railway Cloud**.
+
+### 📝 User Registration Page
+
+Create a new account:
+
+```
+https://web-production-d3df0.up.railway.app/register
+```
+
+This page allows users to:
+
+* Create a username
+* Set a password
+* Generate a JWT token for authentication
+
+---
+
+### 🔌 MCP Server Endpoint
+
+Main MCP endpoint used by Claude and N8N:
+
+```
+https://web-production-d3df0.up.railway.app/mcp
+```
+
+This endpoint handles:
+
+* MCP tool execution
+* AI requests from Claude
+* Automation requests from N8N workflows
+
+---
+
+### 🧪 Health Check (Optional)
+
+Check if the server is running:
+
+```
+https://web-production-d3df0.up.railway.app/health
+```
+
+Expected response:
+
+```
+{"status":"ok"}
+```
